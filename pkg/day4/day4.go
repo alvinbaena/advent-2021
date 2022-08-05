@@ -48,7 +48,7 @@ func loadBoards() []*bingoBoard {
 			buffer = append(buffer, partial)
 		} else {
 			// Next board
-			boards = append(boards, newBingoBoard(buffer))
+			boards = append(boards, newBingoBoard(buffer, len(boards)))
 			buffer = [][]int{}
 		}
 	}
@@ -67,15 +67,69 @@ iteration:
 			panic(err)
 		}
 
-		fmt.Println("Ballot", number)
+		fmt.Println("----------------------------------")
+		fmt.Println("Marking boards with ballot", number)
 		for _, board := range boards {
 			if board.MarkNumber(number) {
 				// We have a winning board
-				fmt.Println("Winning board:", board.SumMarked()*board.SumUnmarked())
+				board.PrintBoard()
+				fmt.Println("Winning board:", board.BoardIndex, board.LastMarkedNumber()*board.SumUnmarked())
 				break iteration
 			}
 		}
 	}
+
+	elapsed := time.Since(start)
+	fmt.Println("Function call took ", elapsed)
+}
+
+func removeBoard(boards []*bingoBoard, boardIndex int) []*bingoBoard {
+	bingoBoards := boards[:0]
+	for _, board := range boards {
+		if board.BoardIndex != boardIndex {
+			bingoBoards = append(bingoBoards, board)
+		}
+	}
+	return bingoBoards
+}
+
+func Part2() {
+	start := time.Now()
+	boards := loadBoards()
+
+	var winnerBoards []*bingoBoard
+
+	for _, numberStr := range strings.Split(input, ",") {
+		number, err := strconv.Atoi(numberStr)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("----------------------------------")
+		fmt.Println("Marking boards with ballot", number)
+
+		for _, board := range boards {
+			if board.MarkNumber(number) {
+				// We have a winning board
+				winnerBoards = append(winnerBoards, board)
+			}
+		}
+
+		// Remove the winning boards from the array
+		for _, board := range winnerBoards {
+			boards = removeBoard(boards, board.BoardIndex)
+		}
+
+		fmt.Println(len(boards), "boards remain")
+		if len(boards) == 0 {
+			break
+		}
+	}
+
+	// Get the last winner from the array
+	lastWinner := winnerBoards[len(winnerBoards)-1]
+	lastWinner.PrintBoard()
+	fmt.Println("Last winning board:", lastWinner.BoardIndex, lastWinner.LastMarkedNumber()*lastWinner.SumUnmarked())
 
 	elapsed := time.Since(start)
 	fmt.Println("Function call took ", elapsed)

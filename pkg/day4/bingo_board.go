@@ -1,23 +1,26 @@
 package day4
 
+import "fmt"
+
 type bingoBoard struct {
-	board [][]int
-	marks [][]int
+	board      [][]int
+	marks      []int
+	BoardIndex int
 }
 
-func newBingoBoard(board [][]int) *bingoBoard {
+func newBingoBoard(board [][]int, boardIndex int) *bingoBoard {
 	// Init with empty 5x5 matrix
-	return &bingoBoard{board: board, marks: [][]int{{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}}}
+	return &bingoBoard{board: board, marks: []int{}, BoardIndex: boardIndex}
 }
 
 func (b *bingoBoard) MarkNumber(num int) bool {
-	// Check board for the number and mark it on the "marks" matrix
-	// Also change the found number to 0 on the board. To make the sum easier
+	// Mark the board by setting the position to -1
+	// Add the marked values to an array for later if needed
 	for i, row := range b.board {
 		for j, value := range row {
 			if value == num {
-				b.marks[i][j] = value
-				b.board[i][j] = 0
+				b.marks = append(b.marks, value)
+				b.board[i][j] = -1
 			}
 		}
 	}
@@ -29,10 +32,11 @@ func (b *bingoBoard) internalWinCondition(matrix [][]int) bool {
 	for _, row := range matrix {
 		rowCheck := true
 		for _, val := range row {
-			rowCheck = rowCheck && val != 0
+			rowCheck = rowCheck && val < 0
 		}
 
 		if rowCheck {
+			fmt.Println("Board", b.BoardIndex, "is a winner")
 			return true
 		}
 	}
@@ -41,28 +45,43 @@ func (b *bingoBoard) internalWinCondition(matrix [][]int) bool {
 }
 
 func (b *bingoBoard) winCondition() bool {
-	horizontal := b.internalWinCondition(b.marks)
-	vertical := b.internalWinCondition(transpose(b.marks))
-	return horizontal || vertical
-}
-
-func (b *bingoBoard) SumMarked() int {
-	return sum(b.marks)
+	return b.internalWinCondition(b.board) || b.internalWinCondition(transpose(b.board))
 }
 
 func (b *bingoBoard) SumUnmarked() int {
-	return sum(b.board)
-}
-
-func sum(matrix [][]int) int {
 	sum := 0
-	for _, ints := range matrix {
+	for _, ints := range b.board {
 		for _, val := range ints {
-			sum += val
+			// Do not sum negatives used to mark the boards
+			if val > 0 {
+				sum += val
+			}
 		}
 	}
 
 	return sum
+}
+
+func (b *bingoBoard) LastMarkedNumber() int {
+	return b.marks[len(b.marks)-1]
+}
+
+func (b *bingoBoard) PrintBoard() {
+	fmt.Println("Board")
+	printBoard(b.board)
+
+	fmt.Println("Marks")
+	fmt.Println(b.marks)
+}
+
+func printBoard(matrix [][]int) {
+	for row := 0; row < len(matrix); row++ {
+		for column := 0; column < len(matrix[row]); column++ {
+			fmt.Print(matrix[row][column], " ")
+		}
+		fmt.Print("\n")
+	}
+	fmt.Print("\n")
 }
 
 func transpose(a [][]int) [][]int {

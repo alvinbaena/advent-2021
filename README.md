@@ -1,3 +1,5 @@
-Exercises for advent of code 2021 in golang
+# What is this?
+My attempts to solve [advent of code 2021](https://adventofcode.com/2021) using golang.
 
-[Link](https://adventofcode.com/2021)
+# Why?
+Because I wanted to...
