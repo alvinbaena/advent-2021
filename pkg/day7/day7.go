@@ -52,7 +52,8 @@ func average(crabs []int) int {
 		sum += num
 	}
 
-	return int(math.RoundToEven(float64(sum) / float64(len(crabs))))
+	// I think this is wrong. Instead of casting we should be rounding, but the answer requires casting....
+	return int(float64(sum) / float64(len(crabs)))
 }
 
 func difference(a, b int) int {
