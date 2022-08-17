@@ -91,7 +91,7 @@ func initDisplayTable(digits []string, segments []string, input []string) {
 			diff := difference(strings.Split(segment, ""), strings.Split(digits[9], ""))
 			// 2 - 9 = bottom left segment
 			if strings.Join(diff, "") == segments[BottomLeftSegment] {
-				digits[2] = segment
+				digits[2] = sortedString(segment)
 				break
 			}
 		}
