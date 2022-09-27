@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -51,34 +52,68 @@ func newCoordinate(x int8, y int8) *coordinate {
 	return &coordinate{x: x, y: y}
 }
 
+// Only includes the up, down, left, and right adjacent points
 func (c coordinate) adjacent(width, height int8) []coordinate {
 	if c.x == 0 && c.y == 0 {
 		// Top left corner
-		return []coordinate{*newCoordinate(0, 1), *newCoordinate(1, 0)}
+		return []coordinate{
+			*newCoordinate(0, 1),
+			*newCoordinate(1, 0),
+		}
 	} else if c.x == 0 && c.y == height-1 {
 		// Bottom left corner
-		return []coordinate{*newCoordinate(0, height-2), *newCoordinate(1, height-1)}
+		return []coordinate{
+			*newCoordinate(0, height-2),
+			*newCoordinate(1, height-1),
+		}
 	} else if c.x == width-1 && c.y == height-1 {
 		// Bottom right corner
-		return []coordinate{*newCoordinate(width-2, height-1), *newCoordinate(width-1, height-2)}
+		return []coordinate{
+			*newCoordinate(width-2, height-1),
+			*newCoordinate(width-1, height-2),
+		}
 	} else if c.x == width-1 && c.y == 0 {
 		// Top right corner
-		return []coordinate{*newCoordinate(width-2, 0), *newCoordinate(width-1, 1)}
+		return []coordinate{
+			*newCoordinate(width-2, 0),
+			*newCoordinate(width-1, 1),
+		}
 	} else if c.y == 0 && c.x > 0 && c.x < width-1 {
 		// Top row
-		return []coordinate{*newCoordinate(c.x-1, c.y), *newCoordinate(c.x, c.y+1), *newCoordinate(c.x+1, c.y)}
+		return []coordinate{
+			*newCoordinate(c.x-1, c.y),
+			*newCoordinate(c.x, c.y+1),
+			*newCoordinate(c.x+1, c.y),
+		}
 	} else if c.x == 0 && c.y > 0 && c.y < height-1 {
 		// Leftmost column
-		return []coordinate{*newCoordinate(c.x, c.y-1), *newCoordinate(c.x+1, c.y), *newCoordinate(c.x, c.y+1)}
+		return []coordinate{
+			*newCoordinate(c.x, c.y-1),
+			*newCoordinate(c.x+1, c.y),
+			*newCoordinate(c.x, c.y+1),
+		}
 	} else if c.y == height-1 && c.x > 0 && c.x < width-1 {
 		// Bottom row
-		return []coordinate{*newCoordinate(c.x-1, c.y), *newCoordinate(c.x, c.y-1), *newCoordinate(c.x+1, c.y)}
+		return []coordinate{
+			*newCoordinate(c.x-1, c.y),
+			*newCoordinate(c.x, c.y-1),
+			*newCoordinate(c.x+1, c.y),
+		}
 	} else if c.x == width-1 && c.y > 0 && c.y < height-1 {
 		// Rightmost column
-		return []coordinate{*newCoordinate(c.x, c.y-1), *newCoordinate(c.x-1, c.y), *newCoordinate(c.x, c.y+1)}
+		return []coordinate{
+			*newCoordinate(c.x, c.y-1),
+			*newCoordinate(c.x-1, c.y),
+			*newCoordinate(c.x, c.y+1),
+		}
 	} else {
 		// Middle of matrix
-		return []coordinate{*newCoordinate(c.x-1, c.y), *newCoordinate(c.x, c.y-1), *newCoordinate(c.x+1, c.y), *newCoordinate(c.x, c.y+1)}
+		return []coordinate{
+			*newCoordinate(c.x-1, c.y),
+			*newCoordinate(c.x, c.y-1),
+			*newCoordinate(c.x+1, c.y),
+			*newCoordinate(c.x, c.y+1),
+		}
 	}
 }
 
@@ -101,26 +136,31 @@ func lowestAdjacent(c coordinate, wh int8, traversed map[coordinate]struct{}, po
 	return lowestAdjacent(lowest, wh, traversed, points)
 }
 
-func Part1() {
-	start := time.Now()
-	points := loadInput()
-
-	// Square matrix
-	wh := math.Sqrt(float64(len(points)))
-
+func lowestPoints(wh int8, points map[coordinate]int8) map[coordinate]int8 {
 	traversed := make(map[coordinate]struct{})
 	lowest := make(map[coordinate]int8)
 
 	for c := range points {
 		// Do not check if coordinate was already traversed
 		if _, ok := traversed[c]; !ok {
-			low := lowestAdjacent(c, int8(wh), traversed, points)
+			low := lowestAdjacent(c, wh, traversed, points)
 			// Probably a low with a value of 9 is not a low...
 			if points[low] < 9 {
 				lowest[low] = points[low]
 			}
 		}
 	}
+
+	return lowest
+}
+
+func Part1() {
+	start := time.Now()
+	points := loadInput()
+
+	// Square matrix
+	wh := math.Sqrt(float64(len(points)))
+	lowest := lowestPoints(int8(wh), points)
 
 	risk := 0
 	for _, val := range lowest {
@@ -135,40 +175,29 @@ func Part1() {
 	fmt.Println("Function call took ", elapsed)
 }
 
-func findBasin(next []coordinate, wh int8, basin map[coordinate]int8, points map[coordinate]int8) {
-	if next == nil || len(next) == 0 {
-		return
-	}
-	// A basin is complete where all edges have a height of 9. This means the recursion should end
-	// if all adjacent coordinates have a value of 9 or have already been traversed
-	for _, c := range next {
-		// not an edge of the basin or not already checked
-		if _, ok := basin[c]; !ok && points[c] < 9 {
-			basin[c] = points[c]
-
-		}
-	}
-}
-
-func lowestBasin(c coordinate, wh int8, basin map[coordinate]int8, points map[coordinate]int8) {
-	// Add the current if not an edge
-	if points[c] < 9 {
-		basin[c] = points[c]
-	}
-
+func buildBasin(c coordinate, wh int8, basin map[coordinate]struct{}, points map[coordinate]int8) {
 	adjacent := c.adjacent(wh, wh)
-	edge := true
+
+	// If all adjacent points have already been traversed or are edges then exit
+	exit := true
 	for _, c2 := range adjacent {
-		// not an edge of the basin or not already checked
 		if _, ok := basin[c2]; !ok && points[c2] < 9 {
-			basin[c2] = points[c2]
-			edge = false
-			lowestBasin(c2, wh, basin, points)
+			exit = false
 		}
 	}
 
-	if edge {
+	if exit {
 		return
+	}
+
+	basin[c] = struct{}{}
+	for _, c2 := range adjacent {
+		// Do not check if coordinate was already traversed
+		if _, ok := basin[c2]; !ok && points[c2] < 9 {
+			// Not an edge
+			basin[c2] = struct{}{}
+			buildBasin(c2, wh, basin, points)
+		}
 	}
 }
 
@@ -177,28 +206,27 @@ func Part2() {
 	points := loadInput()
 	// Square matrix
 	wh := math.Sqrt(float64(len(points)))
+	// Find the lowest points first, then build basins from there
+	lowest := lowestPoints(int8(wh), points)
 
-	traversed := make(map[coordinate]struct{})
+	// Save basin sizes
 	var basins []int
-
-	for c := range points {
-		// Skip previous basins coordinates
-		if _, ok := traversed[c]; ok {
-			continue
-		}
-
-		basinMap := make(map[coordinate]int8)
-		lowestBasin(c, int8(wh), basinMap, points)
-		basins = append(basins, len(basinMap))
-
-		// Append to traversed
-		for c2 := range basinMap {
-			traversed[c2] = struct{}{}
-		}
-
-		fmt.Println("------------------------------")
-		fmt.Println(basinMap)
+	for c := range lowest {
+		basin := make(map[coordinate]struct{})
+		buildBasin(c, int8(wh), basin, points)
+		basins = append(basins, len(basin))
 	}
+
+	sort.Slice(basins, func(i, j int) bool {
+		return basins[i] > basins[j]
+	})
+
+	mult := 1
+	for _, val := range basins[:3] {
+		mult *= val
+	}
+
+	fmt.Println("Risk:", mult)
 
 	elapsed := time.Since(start)
 	fmt.Println("Function call took ", elapsed)
