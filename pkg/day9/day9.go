@@ -217,6 +217,7 @@ func Part2() {
 		basins = append(basins, len(basin))
 	}
 
+	// Sort largest to the smallest size
 	sort.Slice(basins, func(i, j int) bool {
 		return basins[i] > basins[j]
 	})
