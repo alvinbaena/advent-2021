@@ -179,6 +179,7 @@ func Part2() {
 
 	fmt.Println("---------------------------")
 	fmt.Println("Scores:", scores)
+	fmt.Println("---------------------------")
 	fmt.Println("Middle Score:", scores[len(scores)/2])
 
 	elapsed := time.Since(start)
