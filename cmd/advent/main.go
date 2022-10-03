@@ -1,7 +1,7 @@
 package main
 
 import (
-	"advent-2021/pkg/day10"
+	"advent-2021/pkg/day11"
 )
 
 func main() {
@@ -24,5 +24,7 @@ func main() {
 	//day9.Part1()
 	//day9.Part2()
 	//day10.Part1()
-	day10.Part2()
+	//day10.Part2()
+	//day11.Part1()
+	day11.Part2()
 }

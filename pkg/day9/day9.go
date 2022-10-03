@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func loadInput() map[coordinate]int8 {
+func loadInput() map[Coordinate]int8 {
 	file, err := os.Open("pkg/day9/input.txt")
 	if err != nil {
 		panic(err)
@@ -24,19 +24,20 @@ func loadInput() map[coordinate]int8 {
 		}
 	}(file)
 
-	coords := make(map[coordinate]int8)
+	coords := make(map[Coordinate]int8)
 	scanner := bufio.NewScanner(file)
 	y := 0
 	for scanner.Scan() {
 		line := scanner.Text()
 		split := strings.Split(line, "")
 		for x, p := range split {
+			// Convert to int8
 			val, err := strconv.ParseInt(p, 10, 8)
 			if err != nil {
 				panic(err)
 			}
 
-			coords[*newCoordinate(int8(x), int8(y))] = int8(val)
+			coords[*NewCoordinate(int8(x), int8(y))] = int8(val)
 		}
 		y++
 	}
@@ -44,81 +45,8 @@ func loadInput() map[coordinate]int8 {
 	return coords
 }
 
-type coordinate struct {
-	x, y int8
-}
-
-func newCoordinate(x int8, y int8) *coordinate {
-	return &coordinate{x: x, y: y}
-}
-
-// Only includes the up, down, left, and right adjacent points
-func (c coordinate) adjacent(width, height int8) []coordinate {
-	if c.x == 0 && c.y == 0 {
-		// Top left corner
-		return []coordinate{
-			*newCoordinate(0, 1),
-			*newCoordinate(1, 0),
-		}
-	} else if c.x == 0 && c.y == height-1 {
-		// Bottom left corner
-		return []coordinate{
-			*newCoordinate(0, height-2),
-			*newCoordinate(1, height-1),
-		}
-	} else if c.x == width-1 && c.y == height-1 {
-		// Bottom right corner
-		return []coordinate{
-			*newCoordinate(width-2, height-1),
-			*newCoordinate(width-1, height-2),
-		}
-	} else if c.x == width-1 && c.y == 0 {
-		// Top right corner
-		return []coordinate{
-			*newCoordinate(width-2, 0),
-			*newCoordinate(width-1, 1),
-		}
-	} else if c.y == 0 && c.x > 0 && c.x < width-1 {
-		// Top row
-		return []coordinate{
-			*newCoordinate(c.x-1, c.y),
-			*newCoordinate(c.x, c.y+1),
-			*newCoordinate(c.x+1, c.y),
-		}
-	} else if c.x == 0 && c.y > 0 && c.y < height-1 {
-		// Leftmost column
-		return []coordinate{
-			*newCoordinate(c.x, c.y-1),
-			*newCoordinate(c.x+1, c.y),
-			*newCoordinate(c.x, c.y+1),
-		}
-	} else if c.y == height-1 && c.x > 0 && c.x < width-1 {
-		// Bottom row
-		return []coordinate{
-			*newCoordinate(c.x-1, c.y),
-			*newCoordinate(c.x, c.y-1),
-			*newCoordinate(c.x+1, c.y),
-		}
-	} else if c.x == width-1 && c.y > 0 && c.y < height-1 {
-		// Rightmost column
-		return []coordinate{
-			*newCoordinate(c.x, c.y-1),
-			*newCoordinate(c.x-1, c.y),
-			*newCoordinate(c.x, c.y+1),
-		}
-	} else {
-		// Middle of matrix
-		return []coordinate{
-			*newCoordinate(c.x-1, c.y),
-			*newCoordinate(c.x, c.y-1),
-			*newCoordinate(c.x+1, c.y),
-			*newCoordinate(c.x, c.y+1),
-		}
-	}
-}
-
-func lowestAdjacent(c coordinate, wh int8, traversed map[coordinate]struct{}, points map[coordinate]int8) coordinate {
-	adjacent := c.adjacent(wh, wh)
+func lowestAdjacent(c Coordinate, wh int8, traversed map[Coordinate]struct{}, points map[Coordinate]int8) Coordinate {
+	adjacent := c.Adjacent(wh, wh)
 	// Find the lowest point
 	lowest := c
 	for _, c2 := range adjacent {
@@ -136,12 +64,12 @@ func lowestAdjacent(c coordinate, wh int8, traversed map[coordinate]struct{}, po
 	return lowestAdjacent(lowest, wh, traversed, points)
 }
 
-func lowestPoints(wh int8, points map[coordinate]int8) map[coordinate]int8 {
-	traversed := make(map[coordinate]struct{})
-	lowest := make(map[coordinate]int8)
+func lowestPoints(wh int8, points map[Coordinate]int8) map[Coordinate]int8 {
+	traversed := make(map[Coordinate]struct{})
+	lowest := make(map[Coordinate]int8)
 
 	for c := range points {
-		// Do not check if coordinate was already traversed
+		// Do not check if Coordinate was already traversed
 		if _, ok := traversed[c]; !ok {
 			low := lowestAdjacent(c, wh, traversed, points)
 			// Probably a low with a value of 9 is not a low...
@@ -175,10 +103,10 @@ func Part1() {
 	fmt.Println("Function call took ", elapsed)
 }
 
-func buildBasin(c coordinate, wh int8, basin map[coordinate]struct{}, points map[coordinate]int8) {
-	adjacent := c.adjacent(wh, wh)
+func buildBasin(c Coordinate, wh int8, basin map[Coordinate]struct{}, points map[Coordinate]int8) {
+	adjacent := c.Adjacent(wh, wh)
 
-	// If all adjacent points have already been traversed or are edges then exit
+	// If all Adjacent points have already been traversed or are edges then exit
 	exit := true
 	for _, c2 := range adjacent {
 		if _, ok := basin[c2]; !ok && points[c2] < 9 {
@@ -192,7 +120,7 @@ func buildBasin(c coordinate, wh int8, basin map[coordinate]struct{}, points map
 
 	basin[c] = struct{}{}
 	for _, c2 := range adjacent {
-		// Do not check if coordinate was already traversed
+		// Do not check if Coordinate was already traversed
 		if _, ok := basin[c2]; !ok && points[c2] < 9 {
 			// Not an edge
 			basin[c2] = struct{}{}
@@ -212,7 +140,7 @@ func Part2() {
 	// Save basin sizes
 	var basins []int
 	for c := range lowest {
-		basin := make(map[coordinate]struct{})
+		basin := make(map[Coordinate]struct{})
 		buildBasin(c, int8(wh), basin, points)
 		basins = append(basins, len(basin))
 	}
